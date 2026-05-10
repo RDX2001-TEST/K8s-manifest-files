@@ -1,3 +1,5 @@
+COMMANDS RELATED TO PODS
+--------------------------
 # CREATE
 kubectl apply -f pod.yaml
 
