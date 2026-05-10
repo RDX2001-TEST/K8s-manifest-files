@@ -1,0 +1,276 @@
+# Kubernetes Deployment Notes
+
+--------------------------------------------------
+1. What is Deployment?
+--------------------------------------------------
+
+Deployment is a higher-level Kubernetes controller used to manage Pods and ReplicaSets.
+
+It provides:
+- Scaling
+- Self-healing
+- Rolling updates
+- Rollbacks
+- Version management
+- Declarative updates
+
+Architecture:
+
+Deployment
+   ↓
+ReplicaSet
+   ↓
+Pods
+
+Deployment manages ReplicaSets.
+ReplicaSets manage Pods.
+
+--------------------------------------------------
+2. Deployment Controller
+--------------------------------------------------
+
+Deployment controller continuously compares:
+
+- Desired State (YAML)
+vs
+- Actual Cluster State
+
+If mismatch occurs, Kubernetes reconciles automatically.
+
+Example:
+
+Desired replicas = 3
+Running pods = 2
+
+Deployment/ReplicaSet creates 1 new pod automatically.
+
+This is called:
+Declarative Model
+
+You declare desired state.
+Kubernetes maintains it automatically.
+
+--------------------------------------------------
+3. ReplicaSet
+--------------------------------------------------
+
+ReplicaSet ensures desired number of pod replicas are always running.
+
+Example:
+
+spec:
+  replicas: 3
+
+Means:
+Always maintain 3 running pods.
+
+If one pod crashes:
+ReplicaSet creates a new pod automatically.
+
+--------------------------------------------------
+4. Difference Between Deployment and ReplicaSet
+--------------------------------------------------
+
+Deployment:
+- Manages ReplicaSets
+- Supports rolling updates
+- Supports rollback
+- Version history
+- Used by users mostly
+
+ReplicaSet:
+- Manages Pods directly
+- Maintains replica count
+- No rolling updates
+- No rollback
+- Mostly managed internally by Deployment
+
+--------------------------------------------------
+5. Deployment Lifecycle
+--------------------------------------------------
+
+Step 1:
+kubectl apply -f deploy.yaml
+
+Step 2:
+Deployment creates ReplicaSet
+
+Step 3:
+ReplicaSet creates Pods
+
+Example:
+
+Deployment
+   ↓
+ReplicaSet
+   ↓
+pod1 pod2 pod3
+
+--------------------------------------------------
+6. Scaling
+--------------------------------------------------
+
+Increase replicas:
+
+kubectl scale deployment nginx-deployment --replicas=5
+
+ReplicaSet creates additional pods automatically.
+
+--------------------------------------------------
+7. Rolling Update
+--------------------------------------------------
+
+Old version:
+image: nginx:1.24
+
+New version:
+image: nginx:1.25
+
+Deployment performs rolling update gradually.
+
+Process:
+
+Step 1:
+Create 1 new pod
+Delete 1 old pod
+
+Step 2:
+Create another new pod
+Delete another old pod
+
+Continues until all pods updated.
+
+Benefits:
+- Zero downtime
+- Continuous availability
+- Safer deployments
+
+Architecture:
+
+Deployment
+   ↓
+Old ReplicaSet → old pods
+New ReplicaSet → new pods
+
+--------------------------------------------------
+8. Rollback
+--------------------------------------------------
+
+If new version fails:
+
+kubectl rollout undo deployment nginx-deployment
+
+Deployment restores previous ReplicaSet.
+
+--------------------------------------------------
+9. Rollout Commands
+--------------------------------------------------
+
+Check rollout status:
+
+kubectl rollout status deployment nginx-deployment
+
+Check rollout history:
+
+kubectl rollout history deployment nginx-deployment
+
+Restart deployment:
+
+kubectl rollout restart deployment nginx-deployment
+
+--------------------------------------------------
+10. Blue-Green Deployment
+--------------------------------------------------
+
+Blue-Green deployment uses two environments.
+
+Blue  = Current production
+Green = New version
+
+Traffic initially goes to Blue.
+
+After testing Green:
+Switch service selector from Blue to Green.
+
+Example:
+
+Blue pods:
+version: blue
+
+Green pods:
+version: green
+
+Service initially:
+
+selector:
+  version: blue
+
+Switch traffic:
+
+selector:
+  version: green
+
+Traffic instantly shifts to Green.
+
+--------------------------------------------------
+11. Rolling Update vs Blue-Green
+--------------------------------------------------
+
+Rolling Update:
+- Gradual replacement
+- Lower infra cost
+- Slower rollback
+- Single environment
+
+Blue-Green:
+- Instant traffic switch
+- Faster rollback
+- Requires two environments
+- Higher infra cost
+
+--------------------------------------------------
+12. Important Deployment Commands
+--------------------------------------------------
+
+Create deployment:
+kubectl apply -f deploy.yaml
+
+Get deployments:
+kubectl get deployments
+
+Describe deployment:
+kubectl describe deployment nginx-deployment
+
+Delete deployment:
+kubectl delete deployment nginx-deployment
+
+Scale deployment:
+kubectl scale deployment nginx-deployment --replicas=5
+
+Update image:
+kubectl set image deployment/nginx-deployment nginx=nginx:1.25
+
+Rollback:
+kubectl rollout undo deployment nginx-deployment
+
+Check rollout:
+kubectl rollout status deployment nginx-deployment
+
+Restart deployment:
+kubectl rollout restart deployment nginx-deployment
+
+--------------------------------------------------
+13. Interview Definitions
+--------------------------------------------------
+
+Deployment:
+Deployment is a declarative controller that manages ReplicaSets and provides scaling, rolling updates, self-healing, and rollback capabilities.
+
+ReplicaSet:
+ReplicaSet ensures desired number of pod replicas are always running.
+
+Rolling Update:
+Rolling update gradually replaces old pods with new pods with zero downtime.
+
+Blue-Green Deployment:
+Blue-green deployment maintains two separate environments and switches traffic between them for safer releases.
