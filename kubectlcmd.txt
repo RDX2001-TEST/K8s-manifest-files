@@ -1,0 +1,63 @@
+# CREATE
+kubectl apply -f pod.yaml
+
+# GET PODS
+kubectl get pods
+kubectl get pods -n demo
+kubectl get pods -o wide
+kubectl get pods -w
+
+# DESCRIBE
+kubectl describe pod nginx-pod -n demo
+
+# LOGS
+kubectl logs nginx-pod -n demo
+kubectl logs -f nginx-pod -n demo
+
+# EXEC INTO POD
+kubectl exec -it nginx-pod -n demo -- sh
+kubectl exec -it nginx-pod -n demo -- /bin/bash
+
+# RUN COMMAND INSIDE POD
+kubectl exec nginx-pod -n demo -- ls
+
+# PORT FORWARD
+kubectl port-forward pod/nginx-pod 8080:80 -n demo
+
+# DELETE POD
+kubectl delete pod nginx-pod -n demo
+kubectl delete -f pod.yaml
+
+# EDIT POD
+kubectl edit pod nginx-pod -n demo
+
+# GET YAML
+kubectl get pod nginx-pod -n demo -o yaml
+
+# GET JSON
+kubectl get pod nginx-pod -n demo -o json
+
+# EXPLAIN POD
+kubectl explain pod
+kubectl explain pod.spec.containers
+
+# COPY FILE LOCAL -> POD
+kubectl cp test.txt demo/nginx-pod:/tmp/
+
+# COPY FILE POD -> LOCAL
+kubectl cp demo/nginx-pod:/etc/nginx/nginx.conf .
+
+# EVENTS
+kubectl get events -n demo
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+# RESOURCE USAGE
+kubectl top pod -n demo
+
+# QUICK TEST POD
+kubectl run nginx --image=nginx
+kubectl run busybox --image=busybox -it -- sh
+
+# LABELS
+kubectl get pods --show-labels
+kubectl get pods -l app=nginx
