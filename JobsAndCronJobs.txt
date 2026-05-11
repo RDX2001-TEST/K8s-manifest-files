@@ -1,0 +1,185 @@
+========================
+KUBERNETES JOB
+========================
+
+Definition:
+A Job in Kubernetes is used to run a task one time until completion.
+
+Unlike Deployments, Jobs do not run forever.
+Once the task completes successfully, the pod stops.
+
+Common Use Cases:
+- Database backup
+- Data migration
+- Batch processing
+- Sending emails
+- ETL tasks
+- Report generation
+
+Flow:
+Job Created
+   ↓
+Pod Starts
+   ↓
+Task Executes
+   ↓
+Task Completes
+   ↓
+Pod Status = Completed
+
+Important Fields:
+1. completions
+   Number of successful pod completions required.
+
+2. parallelism
+   Number of pods running simultaneously.
+
+3. restartPolicy
+   Usually set to Never.
+
+Commands:
+
+Create Job:
+kubectl apply -f job.yaml
+
+Get Jobs:
+kubectl get jobs
+
+Get Pods:
+kubectl get pods
+
+Check Logs:
+kubectl logs <pod-name>
+
+Describe Job:
+kubectl describe job <job-name>
+
+Delete Job:
+kubectl delete job <job-name>
+
+Example Job YAML:
+
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: demo-job
+
+spec:
+  completions: 1
+  parallelism: 1
+
+  template:
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: busybox
+          image: busybox
+
+          command:
+            - /bin/sh
+            - -c
+            - echo "Hello Kubernetes Job"
+
+========================================================
+
+========================
+KUBERNETES CRONJOB
+========================
+
+Definition:
+A CronJob runs Jobs automatically at scheduled times.
+
+CronJob = Scheduler for Jobs
+
+Example:
+- Run backup every night
+- Generate reports every hour
+- Clean logs daily
+- Send notifications periodically
+
+Flow:
+Cron Schedule Triggered
+        ↓
+CronJob Creates Job
+        ↓
+Job Creates Pod
+        ↓
+Task Executes
+        ↓
+Pod Completes
+
+Cron Format:
+* * * * *
+
+┌──────── minute (0 - 59)
+│ ┌────── hour (0 - 23)
+│ │ ┌──── day of month (1 - 31)
+│ │ │ ┌── month (1 - 12)
+│ │ │ │ ┌ day of week (0 - 6)
+│ │ │ │ │
+* * * * *
+
+Examples:
+*/1 * * * *   → every minute
+0 * * * *     → every hour
+0 0 * * *     → every midnight
+0 9 * * 1     → every Monday 9 AM
+
+Commands:
+
+Create CronJob:
+kubectl apply -f cronjob.yaml
+
+Get CronJobs:
+kubectl get cronjobs
+
+Get Jobs:
+kubectl get jobs
+
+Get Pods:
+kubectl get pods
+
+Delete CronJob:
+kubectl delete cronjob <name>
+
+Example CronJob YAML:
+
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: demo-cronjob
+
+spec:
+  schedule: "*/1 * * * *"
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+
+          containers:
+            - name: busybox
+              image: busybox
+
+              command:
+                - /bin/sh
+                - -c
+                - date && echo "CronJob Running"
+
+========================================================
+
+Difference Between Job and CronJob:
+
+Job:
+- Runs once
+- Manual execution
+- One-time task
+
+CronJob:
+- Runs repeatedly
+- Automatic scheduling
+- Periodic task
