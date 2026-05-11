@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+
+metadata:
+  name: demo-job
+  namespace: demo
+
+spec:
+  completions: 1
+  parallelism: 1
+
+  template:
+    metadata:
+      name: demo-job-pod
+
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: busybox
+          image: busybox
+
+          command:
+            - /bin/sh
+            - -c
+            - echo "Hello from Kubernetes Job" && sleep 10
