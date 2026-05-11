@@ -1,0 +1,49 @@
+# API version for CronJob resource
+apiVersion: batch/v1
+
+# Type of Kubernetes object
+kind: CronJob
+
+metadata:
+  # Name of the CronJob
+  name: nginx-cronjob
+
+  # Namespace where CronJob will be created
+  namespace: demo
+
+spec:
+  # Cron schedule format
+  # This runs every 1 minute
+  schedule: "*/1 * * * *"
+
+  # Keep only last 3 successful Jobs
+  successfulJobsHistoryLimit: 3
+
+  # Keep only last 1 failed Job
+  failedJobsHistoryLimit: 1
+
+  # Template for creating Jobs
+  jobTemplate:
+    spec:
+
+      # Template for Pod creation
+      template:
+        spec:
+
+          # Do not restart completed/failed container
+          restartPolicy: Never
+
+          containers:
+            # Container name
+            - name: busybox
+
+              # Container image
+              image: busybox
+
+              # Command executed inside container
+              command:
+                - /bin/sh
+                - -c
+
+                # Print current date and message
+                - date && echo "CronJob Running Every Minute"
