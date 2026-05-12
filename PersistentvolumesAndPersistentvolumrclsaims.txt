@@ -1,0 +1,387 @@
+===============================
+PERSISTENT VOLUME (PV) & PERSISTENT VOLUME CLAIM (PVC) NOTES
+===============================
+
+1. WHY PERSISTENT STORAGE IS NEEDED
+-----------------------------------
+Containers are ephemeral in Kubernetes.
+
+If a pod:
+- crashes
+- restarts
+- gets rescheduled
+
+then all container filesystem data is lost unless persistent storage is used.
+
+Examples of persistent data:
+- database files
+- uploads
+- reports
+- logs
+- backups
+
+Kubernetes solves this using:
+- Persistent Volume (PV)
+- Persistent Volume Claim (PVC)
+
+========================================================
+
+2. PERSISTENT VOLUME (PV)
+-------------------------
+PV is the actual storage resource in the cluster.
+
+It may be backed by:
+- local disk
+- AWS EBS
+- EFS
+- NFS
+- Ceph
+- Azure Disk
+- GCP Persistent Disk
+
+PV is cluster-level resource.
+
+PV exists independently of pods.
+
+PV contains:
+- storage size
+- access mode
+- reclaim policy
+- storage backend information
+
+Example:
+Pod deleted -> PV data still exists.
+
+========================================================
+
+3. PERSISTENT VOLUME CLAIM (PVC)
+--------------------------------
+PVC is a request for storage by applications.
+
+Pod does not directly use PV.
+
+Pod uses PVC.
+
+PVC specifies:
+- requested storage size
+- access mode
+- storage class
+
+Kubernetes matches PVC with suitable PV.
+
+========================================================
+
+4. PV-PVC FLOW
+--------------
+Pod
+ ↓
+PVC
+ ↓
+PV
+ ↓
+Actual Storage
+
+========================================================
+
+5. ACCESS MODES
+----------------
+
+A) ReadWriteOnce (RWO)
+----------------------
+Volume can be mounted as read-write by ONE NODE.
+
+Multiple pods on same node can use it.
+
+Commonly used with:
+- AWS EBS
+- Azure Disk
+- GCP PD
+
+========================================================
+
+B) ReadOnlyMany (ROX)
+---------------------
+Many nodes can mount volume as read-only.
+
+========================================================
+
+C) ReadWriteMany (RWX)
+----------------------
+Many nodes can mount volume as read-write simultaneously.
+
+Used by:
+- NFS
+- AWS EFS
+- CephFS
+
+Useful for:
+- shared uploads
+- shared files
+- media sharing
+
+========================================================
+
+D) ReadWriteOncePod (RWOP)
+--------------------------
+Only ONE pod in entire cluster can use volume.
+
+========================================================
+
+6. RECLAIM POLICIES
+-------------------
+
+A) Retain
+----------
+Data remains even after PVC deletion.
+
+Best for databases.
+
+========================================================
+
+B) Delete
+----------
+Storage deleted automatically after PVC deletion.
+
+========================================================
+
+7. STORAGE CLASS
+----------------
+StorageClass enables dynamic provisioning.
+
+Without StorageClass:
+- Admin manually creates PV.
+
+With StorageClass:
+- PVC automatically provisions storage.
+
+Examples:
+- EBS StorageClass
+- Longhorn StorageClass
+- Ceph StorageClass
+
+========================================================
+
+8. HOSTPATH
+------------
+hostPath uses local node filesystem.
+
+Example:
+hostPath: /mnt/data
+
+Useful for:
+- Kind
+- Minikube
+- testing
+- labs
+
+NOT recommended for production.
+
+========================================================
+
+9. PROBLEM WITH LOCAL STORAGE
+-----------------------------
+If storage exists on worker-1 and pod moves to worker-2:
+
+Data becomes inaccessible because local disk belongs only to worker-1.
+
+========================================================
+
+10. PRODUCTION STORAGE SOLUTIONS
+--------------------------------
+Production clusters use distributed/network storage:
+
+- AWS EBS
+- AWS EFS
+- Ceph
+- Longhorn
+- NFS
+- OpenEBS
+
+========================================================
+
+11. IMPORTANT INTERVIEW POINTS
+------------------------------
+
+PV = Actual storage resource
+PVC = Request for storage
+StorageClass = Dynamic provisioning mechanism
+
+Pods are ephemeral.
+Persistent Volumes are durable.
+
+========================================================
+
+12. PV YAML FOR KIND CLUSTER
+----------------------------
+
+File: pv.yaml
+
+apiVersion: v1
+kind: PersistentVolume
+
+metadata:
+  name: demo-pv
+
+spec:
+  capacity:
+    storage: 1Gi
+
+  accessModes:
+    - ReadWriteOnce
+
+  persistentVolumeReclaimPolicy: Retain
+
+  hostPath:
+    path: /mnt/data
+
+========================================================
+
+13. PVC YAML
+------------
+
+File: pvc.yaml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: demo-pvc
+
+spec:
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+      storage: 500Mi
+
+========================================================
+
+14. POD USING PVC
+-----------------
+
+File: pod.yaml
+
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: nginx-pod
+
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+
+    volumeMounts:
+    - name: app-storage
+      mountPath: /usr/share/nginx/html
+
+  volumes:
+  - name: app-storage
+    persistentVolumeClaim:
+      claimName: demo-pvc
+
+========================================================
+
+15. APPLY FILES
+---------------
+
+kubectl apply -f pv.yaml
+kubectl apply -f pvc.yaml
+kubectl apply -f pod.yaml
+
+========================================================
+
+16. CHECK STATUS
+----------------
+
+kubectl get pv
+kubectl get pvc
+kubectl get pods
+
+========================================================
+
+17. TEST PERSISTENCE
+--------------------
+
+Enter pod:
+
+kubectl exec -it nginx-pod -- sh
+
+Create file:
+
+echo "hello kubernetes" > /usr/share/nginx/html/test.txt
+
+Exit pod.
+
+Delete pod:
+
+kubectl delete pod nginx-pod
+
+Recreate pod:
+
+kubectl apply -f pod.yaml
+
+Enter again:
+
+kubectl exec -it nginx-pod -- sh
+
+Check file:
+
+cat /usr/share/nginx/html/test.txt
+
+Output:
+hello kubernetes
+
+This proves persistent storage works.
+
+========================================================
+
+18. CLEANUP
+------------
+
+kubectl delete pod nginx-pod
+kubectl delete pvc demo-pvc
+kubectl delete pv demo-pv
+
+========================================================
+
+19. STATEFULSET
+----------------
+Used mainly for databases.
+
+Provides:
+- stable pod identity
+- stable storage
+- ordered startup/shutdown
+
+Each replica gets dedicated PVC.
+
+Example:
+postgres-0 -> pvc-postgres-0
+postgres-1 -> pvc-postgres-1
+
+========================================================
+
+20. BEST PRACTICES
+-------------------
+
+Development:
+- hostPath
+- local PV
+
+Production Databases:
+- EBS
+- Ceph
+- Longhorn
+
+Shared File Access:
+- EFS
+- NFS
+- CephFS
+
+Cloud Native Uploads:
+- S3/Object Storage preferred over pod filesystem
+
+========================================================
