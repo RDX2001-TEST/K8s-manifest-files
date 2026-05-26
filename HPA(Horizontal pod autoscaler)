@@ -81,3 +81,5 @@ CPU Utilization = 100 / 200 × 100 = 50%
 
 IMPORTANT:
 HPA uses REQUESTS, not LIMITS.
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml   <----metrics server installation
