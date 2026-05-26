@@ -1,0 +1,83 @@
+# Horizontal Pod Autoscaler (HPA) Notes
+
+## What is HPA?
+
+Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in Kubernetes based on metrics like:
+
+- CPU usage
+- Memory usage
+- Requests/sec
+- Queue length
+- Kafka lag
+- Custom Prometheus metrics
+
+It works mainly with:
+
+- Deployment
+- StatefulSet
+- ReplicaSet
+
+---
+
+# HPA Architecture
+
+Pods
+  ↓
+Metrics Server / Prometheus Adapter
+  ↓
+Metrics API
+  ↓
+HPA Controller
+  ↓
+Deployment replica count updated
+  ↓
+Pods scaled up/down
+
+---
+
+# Metrics APIs
+
+## Resource Metrics API
+
+Used for:
+- CPU
+- Memory
+
+API:
+```bash
+metrics.k8s.io
+
+--------------------------------------------------------------------------------------------
+Core HPA Formula
+
+DesiredReplicas = CurrentReplicas × (CurrentMetricValue / DesiredMetricValue)
+
+Example
+
+Current replicas = 4
+
+Current CPU = 80%
+
+Desired CPU = 40%
+
+DesiredReplicas = 4 × (80 / 40)
+
+DesiredReplicas = 8
+
+So Kubernetes scales:
+4 pods → 8 pods
+
+CPU Utilization Formula
+
+CPUUtilization = (ActualCPUUsage / RequestedCPU) × 100
+
+Example:
+
+Requested CPU = 200m
+
+Actual usage = 100m
+
+CPU Utilization = 100 / 200 × 100 = 50%
+
+IMPORTANT:
+HPA uses REQUESTS, not LIMITS.
