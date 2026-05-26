@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: compact-url
+  namespace: compact-url
+
+spec:
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: compact-url
+
+  template:
+    metadata:
+      labels:
+        app: compact-url
+
+    spec:
+      containers:
+      - name: compact-url
+
+        image: dockdockgo2001/compact-url:v1
+
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8080
